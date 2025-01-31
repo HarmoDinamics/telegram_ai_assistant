@@ -1,9 +1,14 @@
+from .meta_coordinator import MetaCoordinator
 import asyncio
 from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, filters
 from .config import telegram_token_bots, assistant_id_bots
 from .handlers import BotHandlers
-
 class Bot:
+    def __init__(self, token: str, assistant_id: str):
+        self.application = ApplicationBuilder().token(token).build()
+        self.meta_coordinator = MetaCoordinator()  # Meta-Coordinator hinzufügen
+        self.setup_handlers()
+        
     def __init__(self, token: str, assistant_id: str):
         """Initialize the bot application with a token and assistant_id"""
         self.application = ApplicationBuilder().token(token).build()
@@ -16,6 +21,16 @@ class Bot:
         self.application.add_handler(CommandHandler("start", self.handlers.start))
         self.application.add_handler(CommandHandler("help", self.handlers.help_command))
         self.application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, self.handlers.process_message))
+
+async def process_message(self, update, context):
+    """Nimmt die User-Nachricht entgegen und leitet sie an den Meta-Coordinator weiter."""
+    user_id = update.message.chat_id
+    user_message = update.message.text
+
+    # Meta-Coordinator entscheidet über die Antwort
+    response = self.meta_coordinator.analyze_message(user_id, user_message)
+
+    await update.message.reply_text(response)  # Antwort an den User zurücksenden
 
     async def send_message(self, message: str):
         """Send a message to the specified chat_id"""
